@@ -66,3 +66,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication settings
+LOGIN_REDIRECT_URL = '/relationship/books/'
+LOGOUT_REDIRECT_URL = '/relationship/books/'
