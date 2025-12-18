@@ -5,10 +5,11 @@ urlpatterns = [
 ]
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("", include("relationship_app.urls")),
 ]
 
 from django.urls import path, include
