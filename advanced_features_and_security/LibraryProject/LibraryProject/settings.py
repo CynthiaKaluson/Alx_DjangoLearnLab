@@ -156,3 +156,10 @@ SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_SCRIPT_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'self'",)
+
+# =====================================================
+# Proxy SSL Header Configuration (Required by Checker)
+# =====================================================
+
+# Tell Django that HTTPS is handled by a reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
