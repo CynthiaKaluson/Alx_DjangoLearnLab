@@ -1,18 +1,5 @@
-"""
-Admin configuration for API models.
-"""
 from django.contrib import admin
-from .models import Author, Book
+from .models import Book
 
-
-@admin.register(Author)
-class AuthorAdmin(admin.ModelAdmin):
-    list_display = ['name']
-    search_fields = ['name']
-
-
-@admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'publication_year']
-    list_filter = ['author']
-    search_fields = ['title']
+# Register Book model with admin
+admin.site.register(Book)
