@@ -227,3 +227,146 @@ python manage.py runserver
 - Django
 - Django REST Framework
 - django-filter
+
+## Testing
+
+### Test Suite Overview
+The project includes comprehensive unit tests for all API endpoints, covering:
+- CRUD operations (Create, Read, Update, Delete)
+- Filtering functionality
+- Search functionality
+- Ordering functionality
+- Authentication and permissions
+- Error handling and edge cases
+
+### Running Tests
+
+To run all tests:
+```bash
+python manage.py test api
+```
+
+To run tests with verbose output:
+```bash
+python manage.py test api --verbosity=2
+```
+
+To run a specific test class:
+```bash
+python manage.py test api.test_views.BookAPITestCase
+```
+
+To run a specific test method:
+```bash
+python manage.py test api.test_views.BookAPITestCase.test_create_book_authenticated
+```
+
+### Test Cases
+
+#### CRUD Operations Tests
+
+1. **test_list_books**: Tests retrieving all books
+   - Expected: 200 OK status, list of all books
+
+2. **test_retrieve_book_detail**: Tests retrieving a single book
+   - Expected: 200 OK status, correct book details
+
+3. **test_create_book_authenticated**: Tests creating a book with authentication
+   - Expected: 201 CREATED status, book created in database
+
+4. **test_create_book_unauthenticated**: Tests creating a book without authentication
+   - Expected: 403 FORBIDDEN status
+
+5. **test_update_book_authenticated**: Tests updating a book with authentication
+   - Expected: 200 OK status, book updated in database
+
+6. **test_update_book_unauthenticated**: Tests updating a book without authentication
+   - Expected: 403 FORBIDDEN status
+
+7. **test_delete_book_authenticated**: Tests deleting a book with authentication
+   - Expected: 204 NO CONTENT status, book removed from database
+
+8. **test_delete_book_unauthenticated**: Tests deleting a book without authentication
+   - Expected: 403 FORBIDDEN status
+
+#### Filtering Tests
+
+9. **test_filter_books_by_author**: Tests filtering books by author name
+   - Expected: 200 OK status, only books by specified author
+
+10. **test_filter_books_by_publication_year**: Tests filtering by publication year
+    - Expected: 200 OK status, only books from specified year
+
+#### Search Tests
+
+11. **test_search_books**: Tests searching books by title or author
+    - Expected: 200 OK status, books matching search query
+
+#### Ordering Tests
+
+12. **test_order_books_by_title**: Tests ordering books by title (ascending)
+    - Expected: 200 OK status, books sorted alphabetically
+
+13. **test_order_books_by_publication_year_descending**: Tests ordering by year (descending)
+    - Expected: 200 OK status, books sorted newest to oldest
+
+#### Combined Features Tests
+
+14. **test_combined_filter_search_order**: Tests combining multiple query parameters
+    - Expected: 200 OK status, all filters applied correctly
+
+#### Error Handling Tests
+
+15. **test_invalid_book_creation_missing_fields**: Tests creating book with missing fields
+    - Expected: 400 BAD REQUEST status
+
+16. **test_retrieve_nonexistent_book**: Tests retrieving a non-existent book
+    - Expected: 404 NOT FOUND status
+
+### Interpreting Test Results
+
+#### Successful Test Run
+```bash
+----------------------------------------------------------------------
+Ran 16 tests in 2.345s
+
+OK
+```
+
+This indicates all tests passed successfully.
+
+#### Failed Test Run
+```bash
+FAIL: test_create_book_authenticated (api.test_views.BookAPITestCase)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+...
+AssertionError: 403 != 201
+```
+
+This indicates a test failed. Review the error message and fix the issue.
+
+### Test Coverage
+
+To check test coverage (requires `coverage` package):
+```bash
+pip install coverage
+coverage run --source='.' manage.py test api
+coverage report
+```
+
+### Testing Strategy
+
+1. **Setup**: Each test uses fresh test data created in `setUp()` method
+2. **Isolation**: Tests are independent and don't affect each other
+3. **Authentication**: Tests verify both authenticated and unauthenticated scenarios
+4. **Edge Cases**: Tests include invalid data and non-existent resources
+5. **Permissions**: Tests ensure proper access control enforcement
+
+### Best Practices
+
+- Run tests before committing code
+- Add new tests when adding new features
+- Keep tests focused on single functionality
+- Use descriptive test names
+- Document expected behavior in test docstrings

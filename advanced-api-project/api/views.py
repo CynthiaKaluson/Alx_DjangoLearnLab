@@ -1,81 +1,115 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from django_filters import rest_framework
-from rest_framework import filters
-from .models import Book
-from .serializers import BookSerializer
+from django.test import TestCase
+from django.contrib.auth.models import User
+from rest_framework.test import APIClient
+from rest_framework import status
+from api.models import Book
 
 
-# ListView: Retrieve all books with filtering, searching, and ordering
-class BookListView(generics.ListAPIView):
+class BookAPITestCase(TestCase):
     """
-    API view to retrieve list of books.
-    Supports filtering by title, author, and publication_year.
-    Supports searching by title and author.
-    Supports ordering by title and publication_year.
-    Accessible to all users (authenticated and unauthenticated).
+    Test suite for Book API endpoints.
+    Tests CRUD operations, filtering, searching, ordering, and permissions.
     """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
 
-    # Enable filtering, searching, and ordering
-    filter_backends = [rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    def setUp(self):
+        """
+        Set up test client, test user, and sample book data.
+        Runs before each test method.
+        """
+        # Create API client
+        self.client = APIClient()
 
-    # Filtering: Allow filtering by title, author, and publication_year
-    filterset_fields = ['title', 'author', 'publication_year']
+        # Create test user for authentication
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
 
-    # Searching: Allow searching by title and author
-    search_fields = ['title', 'author']
+        # Create sample books for testing
+        self.book1 = Book.objects.create(
+            title='Django for Beginners',
+            author='William Vincent',
+            publication_year=2023
+        )
 
-    # Ordering: Allow ordering by title and publication_year
-    ordering_fields = ['title', 'publication_year']
+        self.book2 = Book.objects.create(
+            title='Python Crash Course',
+            author='Eric Matthes',
+            publication_year=2019
+        )
 
-    # Default ordering
-    ordering = ['title']
+        self.book3 = Book.objects.create(
+            title='Django REST Framework Guide',
+            author='William Vincent',
+            publication_year=2024
+        )
 
+    def test_list_books(self):
+        """
+        Test retrieving list of all books.
+        Should return 200 OK and list of books.
+        """
+        response = self.client.get('/api/books/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
 
-# DetailView: Retrieve a single book by ID
-class BookDetailView(generics.RetrieveAPIView):
-    """
-    API view to retrieve a single book by ID.
-    Accessible to all users (authenticated and unauthenticated).
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    def test_retrieve_book_detail(self):
+        """
+        Test retrieving a single book by ID.
+        Should return 200 OK and book details.
+        """
+        response = self.client.get(f'/api/books/{self.book1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['title'], 'Django for Beginners')
+        self.assertEqual(response.data['author'], 'William Vincent')
 
+    def test_create_book_authenticated(self):
+        """
+        Test creating a new book with authentication.
+        Should return 201 CREATED and book data.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        data = {
+            'title': 'New Book',
+            'author': 'New Author',
+            'publication_year': 2025
+        }
+        response = self.client.post('/api/books/create/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Book.objects.count(), 4)
+        self.assertEqual(response.data['title'], 'New Book')
 
-# CreateView: Add a new book
-class BookCreateView(generics.CreateAPIView):
-    """
-    API view to create a new book.
-    Only accessible to authenticated users.
-    Handles form submissions and data validation automatically.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
+    def test_create_book_unauthenticated(self):
+        """
+        Test creating a book without authentication.
+        Should return 403 FORBIDDEN.
+        """
+        data = {
+            'title': 'Unauthorized Book',
+            'author': 'Unauthorized Author',
+            'publication_year': 2025
+        }
+        response = self.client.post('/api/books/create/', data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_update_book_authenticated(self):
+        """
+        Test updating a book with authentication.
+        Should return 200 OK and updated data.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        data = {
+            'title': 'Updated Django Book',
+            'author': 'William Vincent',
+            'publication_year': 2023
+        }
+        response = self.client.put(f'/api/books/update/{self.book1.id}/', data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.book1.refresh_from_db()
+        self.assertEqual(self.book1.title, 'Updated Django Book')
 
-# UpdateView: Modify an existing book
-class BookUpdateView(generics.UpdateAPIView):
-    """
-    API view to update an existing book.
-    Only accessible to authenticated users.
-    Handles form submissions and data validation automatically.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
-
-
-# DeleteView: Remove a book
-class BookDeleteView(generics.DestroyAPIView):
-    """
-    API view to delete a book.
-    Only accessible to authenticated users.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
+    def test_update_book_unauthenticated(self):
+        """
+        Test updating a book without authentication.
+        Should return 403 FORBIDDEN.
+        """
