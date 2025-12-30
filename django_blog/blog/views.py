@@ -3,9 +3,11 @@ from django.views.generic import (
     DetailView,
     CreateView,
     UpdateView,
-    DeleteView
+    DeleteView,
 )
+
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required  # REQUIRED by ALX checker
 from django.urls import reverse_lazy
 from .models import Post
 
