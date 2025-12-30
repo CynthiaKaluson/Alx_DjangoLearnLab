@@ -1,0 +1,34 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>Search Results for "{{ query }}"</h2>
+    <p>Found {{ posts.count }} post(s)</p>
+
+    {% if posts %}
+        {% for post in posts %}
+        <article class="media content-section">
+            <div class="media-body">
+                <div class="article-metadata">
+                    <a class="mr-2" href="#">{{ post.author }}</a>
+                    <small class="text-muted">{{ post.published_date|date:"F d, Y" }}</small>
+                </div>
+                <h2><a class="article-title" href="{% url 'post-detail' post.id %}">{{ post.title }}</a></h2>
+                <p class="article-content">{{ post.content|truncatewords:30 }}</p>
+
+                {% if post.tags.all %}
+                <div class="mt-2">
+                    <strong>Tags:</strong>
+                    {% for tag in post.tags.all %}
+                        <a href="{% url 'posts-by-tag' tag.slug %}" class="badge badge-secondary">{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    {% else %}
+        <p>No posts found matching your search.</p>
+    {% endif %}
+</div>
+{% endblock content %}

@@ -9,7 +9,7 @@
         </div>
         <h2 class="article-title">{{ object.title }}</h2>
         <p class="article-content">{{ object.content }}</p>
-        
+
         {% if user == object.author %}
             <div>
                 <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url 'post-update' object.id %}">Update</a>
@@ -19,10 +19,19 @@
     </div>
 </article>
 
+{% if object.tags.all %}
+<div class="mt-3 mb-3">
+    <strong>Tags:</strong>
+    {% for tag in object.tags.all %}
+        <a href="{% url 'posts-by-tag' tag.slug %}" class="badge badge-info">{{ tag.name }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
 <!-- Comments Section -->
 <div class="content-section mt-4">
     <h3>Comments ({{ object.comments.count }})</h3>
-    
+
     {% if user.is_authenticated %}
     <div class="mb-4">
         <h4>Add a Comment</h4>
@@ -35,9 +44,9 @@
     {% else %}
     <p><a href="{% url 'login' %}">Login</a> to leave a comment.</p>
     {% endif %}
-    
+
     <hr>
-    
+
     {% for comment in object.comments.all %}
     <div class="media mb-4">
         <div class="media-body">
@@ -49,7 +58,7 @@
                 {% endif %}
             </div>
             <p class="mt-2">{{ comment.content }}</p>
-            
+
             {% if user == comment.author %}
             <div>
                 <a class="btn btn-sm btn-secondary" href="{% url 'comment-update' comment.id %}">Edit</a>
