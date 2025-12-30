@@ -1,5 +1,8 @@
+from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -9,16 +12,14 @@ def register(request):
     else:
         form = UserCreationForm()
 
-    return render(request, "blog/register.html", {"form": form})
+    return render(request, "registration/register.html", {"form": form})
 
-from django.contrib.auth.decorators import login_required
-
-@login_required
-def profile(request):
-    return render(request, "blog/profile.html")
-
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def profile(request):
-    return render(request, "blog/profile.html")
+    if request.method == "POST":
+        request.user.email = request.POST.get("email")
+        request.user.save()
+        return redirect("profile")
+
+    return render(request, "registration/profile.html")
