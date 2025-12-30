@@ -11,7 +11,10 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="email" name="email" placeholder="Email" required>
+
+    <label>Email:</label>
+    <input type="email" name="email" required>
+
     <button type="submit">Register</button>
 </form>
 </body>
