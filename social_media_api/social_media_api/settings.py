@@ -23,7 +23,6 @@ INSTALLED_APPS = [
     'posts',
 ]
 
-
 AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
