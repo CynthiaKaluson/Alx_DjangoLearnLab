@@ -1,44 +1,28 @@
-from django.contrib.auth import authenticate, get_user_model
-from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
-
-from .serializers import RegisterSerializer, LoginSerializer
+from rest_framework import status, permissions
+from .models import CustomUser
 
 
-User = get_user_model()
+class FollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        user_to_follow = CustomUser.objects.all().filter(id=user_id).first()
+        if not user_to_follow:
+            return Response({'error': 'User not found'}, status=404)
+
+        request.user.following.add(user_to_follow)
+        return Response({'message': 'User followed'}, status=200)
 
 
-class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
+class UnfollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
+    def post(self, request, user_id):
+        user_to_unfollow = CustomUser.objects.all().filter(id=user_id).first()
+        if not user_to_unfollow:
+            return Response({'error': 'User not found'}, status=404)
 
-class LoginView(generics.GenericAPIView):
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        user = authenticate(
-            username=request.data.get('username'),
-            password=request.data.get('password')
-        )
-
-        if not user:
-            return Response(
-                {"error": "Invalid credentials"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key})
-
-
-class ProfileView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({
-            "id": request.user.id,
-            "username": request.user.username,
-            "email": request.user.email
-        })
+        request.user.following.remove(user_to_unfollow)
+        return Response({'message': 'User unfollowed'}, status=200)
