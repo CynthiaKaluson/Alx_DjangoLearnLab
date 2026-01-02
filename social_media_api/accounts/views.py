@@ -1,28 +1,30 @@
-from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from .models import CustomUser
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
 
 
-class FollowUserView(APIView):
+class FollowUserView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
-        user_to_follow = CustomUser.objects.all().filter(id=user_id).first()
-        if not user_to_follow:
-            return Response({'error': 'User not found'}, status=404)
-
+        user_to_follow = get_object_or_404(CustomUser.objects.all(), id=user_id)
         request.user.following.add(user_to_follow)
-        return Response({'message': 'User followed'}, status=200)
+        return Response(
+            {"detail": "User followed successfully"},
+            status=status.HTTP_200_OK
+        )
 
 
-class UnfollowUserView(APIView):
+class UnfollowUserView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
-        user_to_unfollow = CustomUser.objects.all().filter(id=user_id).first()
-        if not user_to_unfollow:
-            return Response({'error': 'User not found'}, status=404)
-
+        user_to_unfollow = get_object_or_404(CustomUser.objects.all(), id=user_id)
         request.user.following.remove(user_to_unfollow)
-        return Response({'message': 'User unfollowed'}, status=200)
+        return Response(
+            {"detail": "User unfollowed successfully"},
+            status=status.HTTP_200_OK
+        )
