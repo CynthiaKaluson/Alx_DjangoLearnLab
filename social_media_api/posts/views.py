@@ -3,8 +3,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
-from django.contrib.contenttypes.models import ContentType
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from .permissions import IsAuthorOrReadOnly
@@ -60,7 +58,7 @@ def like_post(request, pk):
     """
     Like a post. Creates a Like object and generates a notification.
     """
-    post = get_object_or_404(Post, pk=pk)
+    post = generics.get_object_or_404(Post, pk=pk)
 
     # Use get_or_create to handle likes
     like, created = Like.objects.get_or_create(user=request.user, post=post)
@@ -92,7 +90,7 @@ def unlike_post(request, pk):
     """
     Unlike a post. Removes the Like object.
     """
-    post = get_object_or_404(Post, pk=pk)
+    post = generics.get_object_or_404(Post, pk=pk)
 
     try:
         like = Like.objects.get(user=request.user, post=post)
