@@ -1,11 +1,14 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from django.shortcuts import get_object_or_404
+from django.contrib.contenttypes.models import ContentType
+from .models import Post, Comment, Like
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from .permissions import IsAuthorOrReadOnly
+from notifications.models import Notification
 
 User = get_user_model()
 
@@ -25,7 +28,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        comment = serializer.save(author=self.request.user)
+
+        # Create notification for post author
+        if comment.post.author != self.request.user:
+            Notification.objects.create(
+                recipient=comment.post.author,
+                actor=self.request.user,
+                verb='commented on your post',
+                target=comment.post
+            )
 
 
 @api_view(['GET'])
@@ -35,16 +47,64 @@ def feed_view(request):
     Return posts from users that the current user follows,
     ordered by creation date (most recent first).
     """
-    # Get the current user
+    user = request.user
+    following_users = user.following.all()
+    posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_post(request, pk):
+    """
+    Like a post. Creates a Like object and generates a notification.
+    """
+    post = generics.get_object_or_404(Post, pk=pk)
     user = request.user
 
-    # Get all users that the current user is following
-    following_users = user.following.all()
+    # Check if user already liked the post
+    like, created = Like.objects.get_or_create(user=user, post=post)
 
-    # Get posts from followed users, ordered by creation date
-    posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
+    if not created:
+        return Response(
+            {'detail': 'You have already liked this post'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # Serialize the posts
-    serializer = PostSerializer(posts, many=True)
+    # Create notification for post author
+    if post.author != user:
+        Notification.objects.create(
+            recipient=post.author,
+            actor=user,
+            verb='liked your post',
+            target=post
+        )
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(
+        {'detail': 'Post liked successfully'},
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unlike_post(request, pk):
+    """
+    Unlike a post. Removes the Like object.
+    """
+    post = generics.get_object_or_404(Post, pk=pk)
+    user = request.user
+
+    try:
+        like = Like.objects.get(user=user, post=post)
+        like.delete()
+        return Response(
+            {'detail': 'Post unliked successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Like.DoesNotExist:
+        return Response(
+            {'detail': 'You have not liked this post'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
