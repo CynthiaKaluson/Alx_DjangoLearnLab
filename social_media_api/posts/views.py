@@ -60,11 +60,10 @@ def like_post(request, pk):
     """
     Like a post. Creates a Like object and generates a notification.
     """
-    post = generics.get_object_or_404(Post, pk=pk)
-    user = request.user
+    post = get_object_or_404(Post, pk=pk)
 
-    # Check if user already liked the post
-    like, created = Like.objects.get_or_create(user=user, post=post)
+    # Use get_or_create to handle likes
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if not created:
         return Response(
@@ -73,10 +72,10 @@ def like_post(request, pk):
         )
 
     # Create notification for post author
-    if post.author != user:
+    if post.author != request.user:
         Notification.objects.create(
             recipient=post.author,
-            actor=user,
+            actor=request.user,
             verb='liked your post',
             target=post
         )
@@ -93,11 +92,10 @@ def unlike_post(request, pk):
     """
     Unlike a post. Removes the Like object.
     """
-    post = generics.get_object_or_404(Post, pk=pk)
-    user = request.user
+    post = get_object_or_404(Post, pk=pk)
 
     try:
-        like = Like.objects.get(user=user, post=post)
+        like = Like.objects.get(user=request.user, post=post)
         like.delete()
         return Response(
             {'detail': 'Post unliked successfully'},
